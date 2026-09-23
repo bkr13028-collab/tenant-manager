@@ -317,4 +317,19 @@ cdate.value=new Date().toISOString().slice(0,10);cashMonth.value=new Date().toIS
 <div style='display:flex;align-items:center;justify-content:space-between;color:white;padding:2px 4px'><b id='contractViewerTitle'>계약서</b><button type='button' onclick='closeContractViewer()' style='background:#fff;color:#222;padding:8px 14px'>닫기</button></div>
 <div style='flex:1;overflow:auto;text-align:center;background:#111;border-radius:10px;padding:6px'><img id='contractLargeImage' alt='계약서 큰 이미지' style='max-width:100%;height:auto;object-fit:contain'></div>
 </div></div>
+
+<style>
+#appInstallBanner{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3000;width:min(430px,calc(100% - 24px));background:#fff;border:1px solid #d8e0eb;border-radius:16px;box-shadow:0 12px 35px rgba(20,38,70,.22);padding:14px;display:none}
+#appInstallBanner .installRow{display:flex;align-items:center;gap:12px}#appInstallBanner img{width:48px;height:48px;border-radius:12px}#appInstallBanner .installText{flex:1;min-width:0}#appInstallBanner .installText b{display:block;color:#18345d;font-size:16px}#appInstallBanner .installText small{color:#64748b}#appInstallBanner .installBtns{display:flex;gap:7px;margin-top:10px}#appInstallBanner button{flex:1;padding:10px 8px;border:0;border-radius:10px;font-weight:800}#appInstallNow{background:#253a5e;color:#fff}#appInstallLater{background:#edf1f6;color:#475569}
+</style>
+<div id="appInstallBanner"><div class="installRow"><img src="icon-192.png" alt="앱 아이콘"><div class="installText"><b>세입자 관리 앱 설치</b><small>홈 화면에 추가해 앱처럼 사용하세요.</small></div></div><div class="installBtns"><button id="appInstallLater" type="button">나중에</button><button id="appInstallNow" type="button">설치</button></div></div>
+<script>
+let deferredInstallPrompt=null;
+const installBanner=document.getElementById('appInstallBanner');
+const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(!isStandalone)installBanner.style.display='block';});
+document.getElementById('appInstallNow').addEventListener('click',async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBanner.style.display='none';});
+document.getElementById('appInstallLater').addEventListener('click',()=>installBanner.style.display='none');
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBanner.style.display='none';});
+</script>
 <script>if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script></body></html>
