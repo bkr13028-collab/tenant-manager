@@ -291,7 +291,8 @@ const CLOUD_FILE='tenant-manager-data.json';
 const CLOUD_SCOPE='https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email';
 let googleAccessToken='',tokenClient=null,cloudFileId='',syncTimer=null,syncBusy=false;
 const googleBtn=document.getElementById('googleBtn'),cloudSetupBtn=document.getElementById('cloudSetupBtn'),cloudStatus=document.getElementById('cloudStatus'),syncDot=document.getElementById('syncDot'),cloudModal=document.getElementById('cloudModal'),closeCloudModal=document.getElementById('closeCloudModal'),googleClientId=document.getElementById('googleClientId'),saveCloudConfig=document.getElementById('saveCloudConfig'),manualCloudSync=document.getElementById('manualCloudSync'),restoreCloud=document.getElementById('restoreCloud'),disconnectCloud=document.getElementById('disconnectCloud'),protocolHelp=document.getElementById('protocolHelp');
-function getClientId(){return (localStorage.getItem('tenant-manager-google-client-id')||localStorage.getItem('water-flex-google-client-id')||'').trim()}
+const DEFAULT_GOOGLE_CLIENT_ID='244073680111-n998k10orcq4fddbfnj29fa0g9bfgj2t.apps.googleusercontent.com';
+function getClientId(){return (localStorage.getItem('tenant-manager-google-client-id')||localStorage.getItem('water-flex-google-client-id')||DEFAULT_GOOGLE_CLIENT_ID).trim()}
 function setCloudStatus(msg,state=''){cloudStatus.innerHTML=`<span class="sync-dot ${state}"></span>${msg}`}
 function openCloudModal(){googleClientId.value=getClientId();protocolHelp.innerHTML=location.protocol==='file:'?'현재는 <b>파일로 직접 실행</b> 중입니다. Google 로그인은 HTTPS 웹주소에서 사용해야 합니다. 웹에 올린 주소를 Google Cloud의 <b>승인된 JavaScript 원본</b>에 등록하세요.':`현재 실행 주소: <b>${location.origin}</b><br>이 주소를 Google Cloud의 승인된 JavaScript 원본에 등록하세요.`;cloudModal.classList.remove('hidden')}
 function closeCloud(){cloudModal.classList.add('hidden')}
