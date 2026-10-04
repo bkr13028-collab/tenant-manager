@@ -321,9 +321,32 @@ function setCloudStatus(msg,state=''){cloudStatus.innerHTML=`<span class="sync-d
 function openCloudModal(){googleClientId.value=getClientId();protocolHelp.innerHTML=location.protocol==='file:'?'현재는 <b>파일로 직접 실행</b> 중입니다. Google 로그인은 HTTPS 웹주소에서 사용해야 합니다. 웹에 올린 주소를 Google Cloud의 <b>승인된 JavaScript 원본</b>에 등록하세요.':`현재 실행 주소: <b>${location.origin}</b><br>이 주소를 Google Cloud의 승인된 JavaScript 원본에 등록하세요.`;cloudModal.classList.remove('hidden')}
 function closeCloud(){cloudModal.classList.add('hidden')}
 async function updateGoogleAccountLabel(){try{const r=await driveFetch('https://www.googleapis.com/oauth2/v3/userinfo');const u=await r.json();if(u.email){localStorage.setItem('tenant-manager-google-email',u.email);googleBtn.textContent='연동됨';setCloudStatus(`${u.email} · Google Drive 연동됨`,'on')}}catch(e){console.warn('account info',e)}}
-function initGoogleClient(){const cid=getClientId();if(!cid||!window.google?.accounts?.oauth2)return false;tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:CLOUD_SCOPE,callback:async resp=>{if(resp.error){googleAccessToken='';const email=localStorage.getItem('tenant-manager-google-email')||'';googleBtn.textContent='다시 연동';setCloudStatus(email?`${email} · 다시 연동이 필요합니다`:'Google 계정 다시 연동 필요','err');return}googleAccessToken=resp.access_token;localStorage.setItem('tenant-manager-google-linked','1');googleBtn.textContent='연동됨';setCloudStatus('Google Drive 연결됨','on');try{await updateGoogleAccountLabel();await findCloudFile();await pullCloudOnLogin()}catch(e){console.error(e);setCloudStatus('연결됨 · 동기화 확인 필요','err')}}});return true}
-function googleConnect(silent=false){if(location.protocol==='file:'){if(!silent){openCloudModal();alert('Google 연동은 HTTPS 웹주소에서 사용하세요.')}return}if(!getClientId()){if(!silent){openCloudModal();alert('클라이언트 ID를 먼저 입력하세요.')}return}if(!initGoogleClient()){if(!silent)alert('Google 로그인 모듈을 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}tokenClient.requestAccessToken({prompt:silent?'':(googleAccessToken?'':'consent')})}
-function restoreGoogleLink(){if(localStorage.getItem('tenant-manager-google-linked')!=='1')return;const email=localStorage.getItem('tenant-manager-google-email')||'';googleBtn.textContent='연동 확인 중';setCloudStatus(email?`${email} · 계정 연동 복원 중…`:'Google 계정 연동 복원 중…','busy');let tries=0;const t=setInterval(()=>{tries++;if(window.google?.accounts?.oauth2){clearInterval(t);googleConnect(true)}else if(tries>=20){clearInterval(t);googleBtn.textContent='다시 연동';setCloudStatus(email?`${email} · 다시 연동을 눌러주세요`:'Google 다시 연동 필요','err')}},250)}
+function cacheGoogleToken(resp){
+  googleAccessToken=resp.access_token||'';
+  const expiresSec=Number(resp.expires_in||3600);
+  if(googleAccessToken){
+    localStorage.setItem('tenant-manager-google-access-token',googleAccessToken);
+    localStorage.setItem('tenant-manager-google-token-expires',String(Date.now()+Math.max(60,expiresSec-60)*1000));
+    localStorage.setItem('tenant-manager-google-linked','1');
+  }
+}
+function initGoogleClient(){const cid=getClientId();if(!cid||!window.google?.accounts?.oauth2)return false;tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:CLOUD_SCOPE,callback:async resp=>{if(resp.error){googleAccessToken='';const email=localStorage.getItem('tenant-manager-google-email')||'';googleBtn.textContent='다시 연동';setCloudStatus(email?`${email} · 다시 연동을 눌러주세요`:'Google 다시 연동 필요','err');return}cacheGoogleToken(resp);googleBtn.textContent='연동됨';setCloudStatus('Google Drive 연결됨','on');try{await updateGoogleAccountLabel();await findCloudFile();await pullCloudOnLogin()}catch(e){console.error(e);setCloudStatus('연결됨 · 동기화 확인 필요','err')}}});return true}
+function googleConnect(){if(location.protocol==='file:'){openCloudModal();alert('Google 연동은 HTTPS 웹주소에서 사용하세요.');return}if(!getClientId()){openCloudModal();alert('클라이언트 ID를 먼저 입력하세요.');return}if(!initGoogleClient()){alert('Google 로그인 모듈을 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}tokenClient.requestAccessToken({prompt:'consent'});}
+function restoreGoogleLink(){
+  if(localStorage.getItem('tenant-manager-google-linked')!=='1')return;
+  const email=localStorage.getItem('tenant-manager-google-email')||'';
+  const saved=localStorage.getItem('tenant-manager-google-access-token')||'';
+  const expires=Number(localStorage.getItem('tenant-manager-google-token-expires')||0);
+  // 중요: 앱 시작 시 Google 로그인 API를 호출하지 않는다. 따라서 계정 선택창이 자동으로 뜨지 않는다.
+  if(saved && expires>Date.now()){
+    googleAccessToken=saved; googleBtn.textContent='연동됨';
+    setCloudStatus(email?`${email} · Google Drive 연동 유지`:'Google Drive 연동 유지','on');
+    setTimeout(async()=>{try{await findCloudFile();await pullCloudOnLogin()}catch(e){console.warn('저장된 Google 연결 확인 실패',e)}},250);
+  }else{
+    googleAccessToken=''; googleBtn.textContent='다시 연동';
+    setCloudStatus(email?`${email} · 로그인 만료 · 다시 연동을 눌러주세요`:'Google 로그인 만료 · 다시 연동 필요','err');
+  }
+}
 async function driveFetch(url,opt={}){if(!googleAccessToken)throw new Error('Google not connected');opt.headers={...(opt.headers||{}),Authorization:`Bearer ${googleAccessToken}`};const r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return r}
 async function findCloudFile(){const q=encodeURIComponent(`name='${CLOUD_FILE}' and trashed=false`);const r=await driveFetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,name,modifiedTime)&pageSize=10`);const j=await r.json();cloudFileId=j.files?.[0]?.id||'';return cloudFileId}
 async function createCloudFile(){const boundary='tenantmgr_'+Date.now();const meta=JSON.stringify({name:CLOUD_FILE,parents:['appDataFolder']});const data=JSON.stringify({version:1,updatedAt:new Date().toISOString(),db});const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${data}\r\n--${boundary}--`;const r=await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body});const j=await r.json();cloudFileId=j.id;return j.id}
@@ -332,11 +355,11 @@ function scheduleCloudSave(){if(!googleAccessToken)return;clearTimeout(syncTimer
 async function loadCloudData(){if(!cloudFileId)await findCloudFile();if(!cloudFileId)return null;const r=await driveFetch(`https://www.googleapis.com/drive/v3/files/${cloudFileId}?alt=media`);return await r.json()}
 function normalizeLoadedDb(v){v=v||{};if(!Array.isArray(v.tenants))v.tenants=[];if(!Array.isArray(v.cash))v.cash=[];if(!v.paid)v.paid={};if(!v.dayEntries)v.dayEntries={};if(!Array.isArray(v.rooms))v.rooms=[];v.tenants.forEach(t=>{if(t.room&&!v.rooms.includes(t.room))v.rooms.push(t.room)});return v}
 async function pullCloudOnLogin(){const cloud=await loadCloudData();if(!cloud?.db){await saveCloudNow();return}const localHas=(db.tenants?.length||0)||(db.cash?.length||0)||(db.rooms?.length||0);const localUpdated=Number(localStorage.getItem('tenant-manager-local-updated')||0);const cloudUpdated=Date.parse(cloud.updatedAt||0)||0;if(!localHas||cloudUpdated>localUpdated){db=normalizeLoadedDb(cloud.db);localStorage.setItem(K,JSON.stringify(db));localStorage.setItem('tenant-manager-local-updated',String(Date.now()));renderAll();setCloudStatus('Drive 데이터 복원 완료','on')}else await saveCloudNow()}
-googleBtn.onclick=()=>googleConnect(false);cloudSetupBtn.onclick=openCloudModal;closeCloudModal.onclick=closeCloud;
+googleBtn.onclick=()=>googleConnect();cloudSetupBtn.onclick=openCloudModal;closeCloudModal.onclick=closeCloud;
 saveCloudConfig.onclick=()=>{const v=googleClientId.value.trim();if(v&&!v.endsWith('.apps.googleusercontent.com')){alert('클라이언트 ID 형식을 확인하세요.');return}if(v)localStorage.setItem('tenant-manager-google-client-id',v);else localStorage.removeItem('tenant-manager-google-client-id');tokenClient=null;closeCloud();alert('구글 연동 설정을 저장했습니다.')};
 manualCloudSync.onclick=async()=>{if(!googleAccessToken){googleConnect();return}await saveCloudNow();alert('Drive 백업이 완료되었습니다.')};
 restoreCloud.onclick=async()=>{if(!googleAccessToken){googleConnect();return}try{const cloud=await loadCloudData();if(!cloud?.db){alert('Drive에 백업 데이터가 없습니다.');return}if(!confirm('현재 데이터를 Drive 백업 데이터로 바꿀까요?'))return;db=normalizeLoadedDb(cloud.db);localStorage.setItem(K,JSON.stringify(db));localStorage.setItem('tenant-manager-local-updated',String(Date.now()));renderAll();closeCloud();setCloudStatus('Drive 데이터 복원 완료','on');alert('Drive에서 복원했습니다.')}catch(e){console.error(e);alert('복원에 실패했습니다.')}};
-disconnectCloud.onclick=()=>{googleAccessToken='';tokenClient=null;cloudFileId='';localStorage.removeItem('tenant-manager-google-linked');localStorage.removeItem('tenant-manager-google-email');googleBtn.textContent='Google 연동';setCloudStatus('로컬 저장 중 · 구글 미연동');closeCloud();alert('구글 연동을 해제했습니다.')};
+disconnectCloud.onclick=()=>{googleAccessToken='';tokenClient=null;cloudFileId='';localStorage.removeItem('tenant-manager-google-linked');localStorage.removeItem('tenant-manager-google-email');localStorage.removeItem('tenant-manager-google-access-token');localStorage.removeItem('tenant-manager-google-token-expires');googleBtn.textContent='Google 연동';setCloudStatus('로컬 저장 중 · 구글 미연동');closeCloud();alert('구글 연동을 해제했습니다.')};
 
 cdate.value=new Date().toISOString().slice(0,10);cashMonth.value=new Date().toISOString().slice(0,7);renderAll();
 </script><div id='contractViewer' class='hidden' onclick="if(event.target===this)closeContractViewer()" style='position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px'>
@@ -360,44 +383,23 @@ document.getElementById('appInstallNow').addEventListener('click',async()=>{if(!
 document.getElementById('appInstallLater').addEventListener('click',()=>installBanner.style.display='none');
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBanner.style.display='none';});
 </script>
-<script id="tenant-manager-v67-auto-link-cache">
+<script id="tenant-manager-v68-auto-link-cache">
 (() => {
-  // Water Flex 방식: 이미 연동한 계정은 앱 실행 시 자동 복원 시도.
-  const AUTO_SYNC_MIN_INTERVAL = 15000;
-  let autoPullBusy = false, lastAutoPullAt = 0;
-
-  async function tenantAutoPull(reason='launch') {
-    if (autoPullBusy || Date.now()-lastAutoPullAt < AUTO_SYNC_MIN_INTERVAL) return;
-    if (!googleAccessToken || typeof pullCloudOnLogin !== 'function') return;
-    autoPullBusy=true; lastAutoPullAt=Date.now();
-    try { await pullCloudOnLogin(); }
-    catch(e){ console.warn('자동 Drive 동기화 건너뜀:', reason, e); }
-    finally { autoPullBusy=false; }
+  const AUTO_SYNC_MIN_INTERVAL=15000; let autoPullBusy=false,lastAutoPullAt=0;
+  async function tenantAutoPull(reason='launch'){
+    if(autoPullBusy||Date.now()-lastAutoPullAt<AUTO_SYNC_MIN_INTERVAL||!googleAccessToken)return;
+    autoPullBusy=true;lastAutoPullAt=Date.now();
+    try{await pullCloudOnLogin()}catch(e){console.warn('자동 Drive 동기화 건너뜀:',reason,e)}finally{autoPullBusy=false}
   }
-
-  window.addEventListener('load',()=>{
-    // restoreGoogleLink는 기존 연동 표시가 있을 때 무팝업 재연결을 시도한다.
-    setTimeout(()=>{ if(localStorage.getItem('tenant-manager-google-linked')==='1') restoreGoogleLink(); },350);
-    setTimeout(()=>tenantAutoPull('launch'),1800);
-  });
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible') setTimeout(()=>tenantAutoPull('visible'),350);
-  });
+  // 계정 선택창을 자동 호출하지 않는다. 유효한 저장 토큰이 있을 때만 백그라운드 동기화.
+  window.addEventListener('load',()=>setTimeout(()=>tenantAutoPull('launch'),1200));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>tenantAutoPull('visible'),350)});
   window.addEventListener('focus',()=>setTimeout(()=>tenantAutoPull('focus'),350));
-
-  // 새 배포가 있으면 서비스워커를 즉시 갱신하고 새 버전으로 한 번만 재로딩.
-  if ('serviceWorker' in navigator && location.protocol!=='file:') {
+  // 캐시는 Google 로그인과 완전히 분리해 자동 갱신.
+  if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(reloading) return; reloading=true; location.reload();
-    });
-    window.addEventListener('load', async ()=>{
-      try {
-        const reg=await navigator.serviceWorker.register('./sw.js?v=67',{updateViaCache:'none'});
-        await reg.update();
-        if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
-      } catch(e){ console.warn('서비스워커 갱신 실패:',e); }
-    });
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=68',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
