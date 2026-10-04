@@ -360,4 +360,44 @@ document.getElementById('appInstallNow').addEventListener('click',async()=>{if(!
 document.getElementById('appInstallLater').addEventListener('click',()=>installBanner.style.display='none');
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBanner.style.display='none';});
 </script>
-<script>if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script></body></html>
+<script id="tenant-manager-v67-auto-link-cache">
+(() => {
+  // Water Flex 방식: 이미 연동한 계정은 앱 실행 시 자동 복원 시도.
+  const AUTO_SYNC_MIN_INTERVAL = 15000;
+  let autoPullBusy = false, lastAutoPullAt = 0;
+
+  async function tenantAutoPull(reason='launch') {
+    if (autoPullBusy || Date.now()-lastAutoPullAt < AUTO_SYNC_MIN_INTERVAL) return;
+    if (!googleAccessToken || typeof pullCloudOnLogin !== 'function') return;
+    autoPullBusy=true; lastAutoPullAt=Date.now();
+    try { await pullCloudOnLogin(); }
+    catch(e){ console.warn('자동 Drive 동기화 건너뜀:', reason, e); }
+    finally { autoPullBusy=false; }
+  }
+
+  window.addEventListener('load',()=>{
+    // restoreGoogleLink는 기존 연동 표시가 있을 때 무팝업 재연결을 시도한다.
+    setTimeout(()=>{ if(localStorage.getItem('tenant-manager-google-linked')==='1') restoreGoogleLink(); },350);
+    setTimeout(()=>tenantAutoPull('launch'),1800);
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible') setTimeout(()=>tenantAutoPull('visible'),350);
+  });
+  window.addEventListener('focus',()=>setTimeout(()=>tenantAutoPull('focus'),350));
+
+  // 새 배포가 있으면 서비스워커를 즉시 갱신하고 새 버전으로 한 번만 재로딩.
+  if ('serviceWorker' in navigator && location.protocol!=='file:') {
+    let reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(reloading) return; reloading=true; location.reload();
+    });
+    window.addEventListener('load', async ()=>{
+      try {
+        const reg=await navigator.serviceWorker.register('./sw.js?v=67',{updateViaCache:'none'});
+        await reg.update();
+        if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      } catch(e){ console.warn('서비스워커 갱신 실패:',e); }
+    });
+  }
+})();
+</script></body></html>
