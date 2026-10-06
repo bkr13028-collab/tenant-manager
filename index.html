@@ -250,7 +250,7 @@
 <div id="brokerManagerModal" class="hidden" style="position:fixed;inset:0;z-index:1300;background:rgba(17,24,39,.55);display:flex;align-items:center;justify-content:center;padding:12px" onclick="if(event.target===this)closeBrokerManager()">
  <div class="card" style="width:min(430px,calc(100vw - 24px));max-height:88vh;overflow:auto;margin:0">
   <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">부동산 중개인 관리</h2><button onclick="closeBrokerManager()" style="background:#eef1f5;color:#526071">×</button></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:12px"><input id="brokerName" placeholder="중개업소/담당자"><input id="brokerPhone" inputmode="tel" placeholder="010-0000-0000"><button onclick="addBroker()">추가</button></div>
+  <div style="display:grid;gap:7px;margin-top:12px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input id="brokerName" placeholder="중개업소/담당자"><input id="brokerPhone" inputmode="tel" placeholder="010-0000-0000"></div><input id="brokerAccount" placeholder="계좌번호 (은행명 포함 가능)"><textarea id="brokerMemo" rows="2" placeholder="메모"></textarea><button onclick="addBroker()">중개인 등록</button></div>
   <div id="brokerList" style="margin-top:10px"></div>
  </div>
 </div>
@@ -303,9 +303,9 @@ function saveVacancyInfo(){
 }
 function openBrokerManager(){renderBrokerList();document.getElementById('brokerManagerModal').classList.remove('hidden')}
 function closeBrokerManager(){document.getElementById('brokerManagerModal').classList.add('hidden');renderBrokerSummary()}
-function addBroker(){const name=document.getElementById('brokerName').value.trim(),phone=document.getElementById('brokerPhone').value.trim();if(!name)return alert('중개업소 또는 담당자명을 입력하세요.');if(!phone.replace(/\D/g,''))return alert('연락처를 입력하세요.');db.brokers.push({id:Date.now(),name,phone});document.getElementById('brokerName').value='';document.getElementById('brokerPhone').value='';save();renderBrokerList()}
+function addBroker(){const name=document.getElementById('brokerName').value.trim(),phone=document.getElementById('brokerPhone').value.trim(),account=document.getElementById('brokerAccount').value.trim(),memo=document.getElementById('brokerMemo').value.trim();if(!name)return alert('중개업소 또는 담당자명을 입력하세요.');if(!phone.replace(/\D/g,''))return alert('연락처를 입력하세요.');db.brokers.push({id:Date.now(),name,phone,account,memo});document.getElementById('brokerName').value='';document.getElementById('brokerPhone').value='';document.getElementById('brokerAccount').value='';document.getElementById('brokerMemo').value='';save();renderBrokerList()}
 function deleteBroker(id){if(confirm('이 중개인 연락처를 삭제할까요?')){db.brokers=db.brokers.filter(x=>x.id!==id);save();renderBrokerList()}}
-function renderBrokerList(){const el=document.getElementById('brokerList');el.innerHTML=(db.brokers||[]).map(b=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;border-bottom:1px solid #eee"><div><b>${b.name}</b><div class="muted">${b.phone}</div></div><button onclick="deleteBroker(${b.id})" style="background:#c94b4b;padding:6px 9px">삭제</button></div>`).join('')||'<div class="muted" style="padding:16px;text-align:center">등록된 중개인이 없습니다.</div>'}
+function renderBrokerList(){const el=document.getElementById('brokerList');el.innerHTML=(db.brokers||[]).map(b=>`<div style="padding:10px 2px;border-bottom:1px solid #eee"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="min-width:0"><b>${b.name}</b><div class="muted" style="margin-top:3px">연락처: ${b.phone||'-'}</div>${b.account?'<div class="muted">계좌번호: '+b.account+'</div>':''}${b.memo?'<div style="margin-top:5px;font-size:13px;white-space:pre-wrap">메모: '+b.memo+'</div>':''}</div><button onclick="deleteBroker(${b.id})" style="background:#c94b4b;padding:6px 9px;flex:none">삭제</button></div></div>`).join('')||'<div class="muted" style="padding:16px;text-align:center">등록된 중개인이 없습니다.</div>'}
 function renderBrokerSummary(){const el=document.getElementById('brokerSummary');if(el)el.textContent='등록 중개인 '+(db.brokers||[]).length+'명';renderBrokerMain()}
 function sendVacancySms(){
  const r=document.getElementById('vacancyRoom').value;if(!r)return alert('공실 호실이 없습니다.');
@@ -616,7 +616,7 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBa
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
-    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=91',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=92',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
