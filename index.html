@@ -238,10 +238,9 @@
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>방 유형<input id="vacancyType"></label><label>에어컨<input id="vacancyAircon" placeholder="예: 2대"></label></div>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>보증금<input id="vacancyDeposit" placeholder="예: 500만원"></label><label>월세<input id="vacancyRent" placeholder="예: 50만원"></label></div>
    <label>청소 상태<select id="vacancyCleaning"><option value="">선택</option><option value="청소했음">청소했음</option><option value="청소 요청 했음">청소 요청 했음</option></select></label>
-   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>방 비밀번호<input id="vacancyRoomPw" placeholder="예: 1234*"></label><label>현관 비밀번호<input id="vacancyDoorPw" placeholder="예: 종0612"></label></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>방 비밀번호<input id="vacancyRoomPw" value="1234*" placeholder="예: 1234*"></label><label>현관 비밀번호<input id="vacancyDoorPw" value="종0612" placeholder="예: 종0612"></label></div>
    <label>주소<input id="vacancyAddress" value="외홈3길 5호 (명동 708-8번지)"></label>
    <label>특이사항<textarea id="vacancyNote" rows="2" placeholder="예: 즉시 입주 가능 / 주차 가능"></textarea></label>
-   <button type="button" onclick="openBrokerManager()" style="background:#526071">중개인 등록</button>
    <div id="brokerSummary" class="muted"></div>
    <button type="button" onclick="sendVacancySms()" style="background:#16834b">등록 중개인에게 문자 보내기</button>
   </div>
@@ -290,8 +289,8 @@ function loadVacancyRoom(){
  document.getElementById('vacancyRent').value=v.rent||((last.rent||0)/10000?((last.rent||0)/10000).toLocaleString('ko-KR')+'만원':'');
  document.getElementById('vacancyCleaning').value=v.cleaning||'';
  document.getElementById('vacancyAircon').value=v.aircon||'';
- document.getElementById('vacancyRoomPw').value=v.roomPw||'';
- document.getElementById('vacancyDoorPw').value=v.doorPw||'';
+ document.getElementById('vacancyRoomPw').value=v.roomPw||'1234*';
+ document.getElementById('vacancyDoorPw').value=v.doorPw||'종0612';
  document.getElementById('vacancyAddress').value=v.address||'외홈3길 5호 (명동 708-8번지)';
  document.getElementById('vacancyNote').value=v.note||'';
 }
@@ -618,7 +617,7 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBa
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
-    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=99',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=100',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
