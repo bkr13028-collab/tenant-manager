@@ -375,8 +375,8 @@ function renderCash(){let mon=cashMonth.value||new Date().toISOString().slice(0,
 function renderAll(){renderTenants();renderUnpaidNow();renderCalendar();renderCash();renderTenantIncome();if(!document.getElementById('movedOutModal').classList.contains('hidden'))renderMovedOutTenants()}
 
 // ===== V79 Supabase ID 로그인/동기화 =====
-const SUPABASE_URL='https://ehjaxspmxkthrfjzkwv.supabase.co';
-const SUPABASE_KEY='sb_publishable_a2ewFKBncVDjTCIzJsxj7A_hi4pTb2c';
+const SUPABASE_URL='https://mfrpsgqhuanavzfnlhyx.supabase.co';
+const SUPABASE_KEY='sb_publishable_YCT6zjiGDVwDWhsNf6tEgA_JRaU_YYM';
 const sb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false},global:{fetch:(input,init)=>fetch(input,init)}}):null;
 let idSession=null,idSaveTimer=null,idSaveBusy=false,idPullBusy=false;
 const idBar=document.getElementById('idBar'),idStatus=document.getElementById('idStatus'),idLoginBtn=document.getElementById('idLoginBtn'),idLogoutBtn=document.getElementById('idLogoutBtn'),idAuthModal=document.getElementById('idAuthModal'),appUserId=document.getElementById('appUserId'),appUserPassword=document.getElementById('appUserPassword');
@@ -517,7 +517,7 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBa
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
-    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=81',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=82',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
