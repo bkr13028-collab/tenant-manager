@@ -206,6 +206,23 @@
 
 #tenantIncome .cash-table-wrap{overflow-x:auto}#tenantIncome table{min-width:680px}@media(max-width:650px){#tenantIncome .cash-month-head{align-items:flex-start}#tenantIncome .cash-month-head>div{width:100%}#tenantIncomeSelect{flex:1;min-width:150px!important}#tenantIncomeMonth{width:145px}}
 </style>
+
+<style id="v87-tenant-desktop-table">
+@media(min-width:651px){
+ #tenants table{width:100%;table-layout:fixed;font-size:13px}
+ #tenants th,#tenants td{vertical-align:middle;padding:10px 8px}
+ #tenants th:nth-child(-n+6),#tenants td:nth-child(-n+6){white-space:nowrap}
+ #tenants th:nth-child(1),#tenants td:nth-child(1){width:7%}
+ #tenants th:nth-child(2),#tenants td:nth-child(2){width:9%}
+ #tenants th:nth-child(3),#tenants td:nth-child(3){width:14%}
+ #tenants th:nth-child(4),#tenants td:nth-child(4){width:13%}
+ #tenants th:nth-child(5),#tenants td:nth-child(5){width:11%}
+ #tenants th:nth-child(6),#tenants td:nth-child(6){width:8%}
+ #tenants th:nth-child(7),#tenants td:nth-child(7){width:30%}
+ #tenants th:nth-child(8),#tenants td:nth-child(8){width:8%;text-align:center}
+ #tenants td:nth-child(7){font-size:12px;line-height:1.45}
+}
+</style>
 </head><body><header><b>🏠 세입자 관리</b><nav style='margin-top:12px'><button onclick="show('calendar')">월세 달력</button><button onclick="show('unpaid')">월세 미납</button><button onclick="show('tenants')">세입자 관리</button><button onclick="show('cash')">월별 입출금</button><button onclick="show('tenantIncome')">세입자별 입금</button></nav></header><div class="idbar" id="idBar"><div><b>🔐 ID 계정</b><div id="idStatus">ID로 로그인하면 여러 기기에서 같은 데이터를 사용할 수 있습니다.</div></div><div class="id-actions"><button id="idLoginBtn">ID 로그인</button><button id="idLogoutBtn" class="hidden">로그아웃</button></div></div>
 <main class='wrap'>
 <section id='calendar'><div class='card'><div class='row'><button onclick='moveMonth(-1)'>◀</button><h2 id='monthTitle' style='margin:5px 12px'></h2><button onclick='moveMonth(1)'>▶</button></div><div class='cal' id='calendarGrid'></div></div></section>
@@ -518,7 +535,7 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBa
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
-    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=86',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=87',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
