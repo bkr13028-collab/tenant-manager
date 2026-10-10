@@ -582,7 +582,7 @@ document.getElementById('importLocalData').onclick=()=>document.getElementById('
 document.getElementById('importLocalFile').addEventListener('change',e=>importLocalBackup(e.target.files?.[0]));
 
 
-cdate.value=new Date().toISOString().slice(0,10);cashMonth.value=new Date().toISOString().slice(0,7);renderAll();
+cdate.value=new Date().toISOString().slice(0,10);cashMonth.value=new Date().toISOString().slice(0,7);renderAll();show('calendar');
 </script><div id='contractViewer' class='hidden' onclick="if(event.target===this)closeContractViewer()" style='position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px'>
 <div style='width:min(980px,100%);height:min(94dvh,100%);display:flex;flex-direction:column;gap:8px'>
 <div style='display:flex;align-items:center;justify-content:space-between;color:white;padding:2px 4px'><b id='contractViewerTitle'>계약서</b><button type='button' onclick='closeContractViewer()' style='background:#fff;color:#222;padding:8px 14px'>닫기</button></div>
@@ -623,7 +623,7 @@ window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;installBa
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     let reloading=false;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;location.reload()});
-    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=117',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
+    window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('./sw.js?v=118',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'})}catch(e){console.warn('서비스워커 갱신 실패:',e)}});
   }
 })();
 </script></body></html>
